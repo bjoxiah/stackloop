@@ -10,7 +10,7 @@ from stackloop.utils.constants import MAX_ITERATIONS
 from stackloop.core.execution import install_dependencies, run_application
 from stackloop.core.debug_session import DebugSession
 from stackloop.core.code_fixer import CodeFixer
-from stackloop.cli.display import display_message, display_welcome
+from stackloop.cli.display import display_message, display_welcome, get_package_version
 from stackloop.cli.prompts import (
     confirm_sync_back, get_runtime_choice, get_script_command, resolve_directory
 )
@@ -18,13 +18,33 @@ from stackloop.cli.prompts import (
 app = typer.Typer(help="StackLoop - AI-powered debugging agent", no_args_is_help=True)
 console = Console()
 
+def version_callback(value: bool):
+    """Display StackLoop version when --version or -v is used."""
+    if value:
+        v = get_package_version("stackloop")
+        if v != "unknown":
+            display_message(console, f"\n[bold cyan]StackLoop version {v}[/bold cyan]\n")
+        else:
+            display_message(console, f"\n[yellow]StackLoop version unknown[/yellow]\n")
+        raise typer.Exit()
+
 @app.callback(invoke_without_command=True)
-def main_callback(ctx: typer.Context):
+def main_callback(
+    ctx: typer.Context,
+    version: bool = typer.Option(
+        None, 
+        "--version", 
+        "-v", 
+        callback=version_callback, 
+        is_eager=True, 
+        help="Show version and exit"
+    )
+):
     """StackLoop - AI-powered debugging agent"""
     if ctx.invoked_subcommand is None:
-        # No subcommand provided, show help
-        print(ctx.get_help())
+        display_message(console, ctx.get_help())
         raise typer.Exit()
+
 
 @app.command("run")
 def run(directory: Optional[Path] = typer.Argument(None, help="Project root directory")):
