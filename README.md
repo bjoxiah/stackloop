@@ -3,6 +3,7 @@
 AI-powered debugging agent that automatically runs, analyzes, and fixes your code.
 
 [![YouTube](https://img.shields.io/badge/YouTube-Tutorial-red)](https://www.youtube.com/watch?v=CM_KvICXwnc)
+[![PyPI - Version](https://img.shields.io/pypi/v/stackloop.svg)](https://pypi.org/project/stackloop)
 
 
 ## Installation
