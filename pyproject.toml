@@ -5,7 +5,7 @@ description = "AI-powered debugging agent that automatically runs, analyzes, and
 authors = ["Blessed Josiah <blessed_josiah@yahoo.com>"]
 readme = "README.md"
 packages = [{include = "stackloop", from = "src"}]
-homepage = "https://github.com/bjoxiah/stackloop"  # Add your GitHub URL
+homepage = "https://github.com/bjoxiah/stackloop" 
 repository = "https://github.com/bjoxiah/stackloop"
 keywords = ["ai", "debugging", "automation", "code-fixing", "developer-tools"]
 classifiers = [
