@@ -31,73 +31,115 @@ class CodeFixer:
         """Apply all suggested fixes"""
         file_updated = False
         for file_fix in analysis.fixes:
-            if file_fix.file_path:
+            if file_fix.file_path and file_fix.can_fix_automatically:
                 file_updated = self._apply_file_fix(file_fix, relative_path)
             else:
-                display_message(self.console, f"\n[yellow]💡 {file_fix.suggested_fix}[/yellow]\n")       
+                display_message(self.console, f"\n[dim yellow]💡 {file_fix.suggested_fix}[/dim yellow]\n")       
         return file_updated
     
     def _apply_file_fix(self, file_fix: FileFix, relative_path: str) -> bool:
         """Apply fix to a specific file."""
-        # Normalize and fix target file path
-        raw_path = str(file_fix.file_path)
-        work_dir = self.session.working_directory.resolve()
+        raw_path = str(file_fix.file_path).strip()
+        work_dir = Path(self.session.working_directory).resolve()
 
-        target_file = None
+        # Normalize the path
+        target_file = self._normalize_path(raw_path, work_dir, relative_path)
+        
+        if not target_file:
+            display_message(self.console, f"\n[yellow]⚠️ Could not resolve path: {raw_path}[/yellow]\n")
+            return False
 
-        if relative_path in raw_path:
-            # Strip work_dir prefix if duplicated
-            relative_part = raw_path.split(relative_path, 1)[-1].lstrip("/\\")
-            # # Keep refernce to file for syncing
-            if relative_part not in self.session.modified_files:
-                self.session.modified_files.add(relative_part)
-                config_path = (self.session.working_directory / "stackloop.config.json").resolve()
-                config_path.write_text(self.session.to_json(indent=2))
-    
-            target_file = work_dir / relative_part
-        else:
-            # Assume the fixer returned a relative path
-            target_file = (work_dir / raw_path).resolve()
+        # Debug logging
+        display_message(self.console, f"\n[dim]📝 AI provided: {raw_path}[/dim]\n")
+        display_message(self.console, f"\n[dim]🔍 Resolved to: {target_file}[/dim]\n")
 
-        # Validate the resolved path
+        # Validate
         if not target_file.exists():
-            display_message(self.console, f"\n[yellow] ⚠️ File not found: {target_file}[/yellow]\n")
+            display_message(self.console, f"\n[yellow]⚠️ File not found: {target_file}[/yellow]\n")
+            display_message(self.console, f"\n[dim]💡 Fix suggestion: {file_fix.suggested_fix[:100]}...[/dim]\n")
             return False
         
-        # Debug logging (optional)
-        display_message(self.console, f"\n[dim] 🔍 Applying fix to: {target_file}[/dim]\n")
-
-        # Validation
         if not target_file.is_file():
-            display_message(self.console, f"\n[yellow] ⚠️ File not found: {target_file}[/yellow]\n")
+            display_message(self.console, f"\n[yellow]⚠️ Not a file: {target_file}[/yellow]\n")
             return False
 
+        # Read original code
         try:
             original_code = target_file.read_text()
         except Exception as e:
-            display_message(self.console, f"\n[red] ❌ Failed to read {file_fix.file_path}: {e}[/red]\n")
+            display_message(self.console, f"\n[red]❌ Failed to read file: {e}[/red]\n")
             return False
 
-        # Generate the corrected code
+        # Get corrected code from AI
         corrected = self._get_corrected_code(original_code, file_fix.suggested_fix)
-
         if not corrected or not getattr(corrected, "code", None):
-            display_message(self.console, f"\n[red] ❌ Invalid fix output for {target_file.name}[/red]\n")
+            display_message(self.console, f"\n[red]❌ AI returned invalid fix[/red]\n")
             return False
 
-        # Backup and apply fix
+        # Backup original
         self._backup_file(target_file)
 
+        # Write corrected code
         try:
             new_code = corrected.code
-        except AttributeError:
-            # fallback in case structure is simpler
-            new_code = getattr(corrected, "code", "")
+            target_file.write_text(new_code)
+        except Exception as e:
+            display_message(self.console, f"\n[red]❌ Failed to write file: {e}[/red]\n")
+            return False
 
-        target_file.write_text(new_code)
-        display_message(self.console, f"\n[green] ✅ Applied fix to {target_file.name}[/green]\n")
+        display_message(self.console, f"\n[green]✅ Applied fix to {target_file.name}[/green]\n")
 
+        # Track the modification
+        self._track_modified_file(target_file, work_dir)
+        
         return True
+
+    def _normalize_path(self, raw_path: str, work_dir: Path, relative_path: str) -> Path | None:
+        """
+        Normalize file path from AI response.
+        """
+        raw_path = raw_path.strip()
+        
+        # Remove duplicated session path if present
+        if relative_path in raw_path:
+            raw_path = raw_path.split(relative_path, 1)[-1].lstrip("/\\")
+        
+        # Convert to Path
+        path_obj = Path(raw_path)
+        
+        # If absolute, try to find relative to work_dir's root
+        if path_obj.is_absolute():
+            # Get the root directory (parent of .stackloop)
+            root_dir = Path(self.session.root_directory)
+            
+            try:
+                # Make it relative to root, then apply to work_dir
+                relative_to_root = path_obj.relative_to(root_dir)
+                return (work_dir / relative_to_root).resolve()
+            except ValueError:
+                # Path is outside root - just use the filename
+                return (work_dir / path_obj.name).resolve()
+        
+        # It's relative - just append to work_dir
+        return (work_dir / path_obj).resolve()
+
+    def _track_modified_file(self, target_file: Path, work_dir: Path):
+        """Track modified file in session config"""
+        try:
+            relative_file_path = target_file.relative_to(work_dir)
+            
+            if str(relative_file_path) not in self.session.modified_files:
+                self.session.modified_files.add(str(relative_file_path))
+                
+                # Update config
+                config_path = work_dir / "stackloop.config.json"
+                config_path.write_text(self.session.to_json(indent=2))
+                
+                display_message(self.console, f"\n[dim]💾 Tracked: {relative_file_path}[/dim]\n")
+        except ValueError:
+            display_message(self.console, f"\n[yellow]⚠️ File outside work directory, not tracked[/yellow]\n")
+        except Exception as e:
+            display_message(self.console, f"\n[yellow]⚠️ Could not update config: {e}[/yellow]\n")
 
     def _build_analysis_prompt(self, stderr: str) -> str:
         return f""" The application failed with the following stacktrace: 
@@ -107,10 +149,12 @@ class CodeFixer:
             - "fixes": a list of objects, each containing: 
                 - "file_path": the relative path to the file that needs to be fixed, or null if the fix is not file-specific (e.g., env issue) 
                 - "suggested_fix": either a code patch (if file exists) or instructions to fix the error 
+                - "can_fix_automatically": a boolean indicating if the fix can be applied automatically (e.g not a package installation issue or not an issue the user must manually resolve)
                 
             Constraints: 
                 - Only consider actual errors for fixing. 
                 - Ignore warnings, notes, or non-fatal messages.
+                - Always set can_fix_automatically to true if issue can be resolved by modifying code files and false if the user has to manually fix.
                 - If multiple files are involved, include all of them in "fixes". 
                 - If the error is environment/config related (no file), set file_path=null. 
                 - Always return a valid JSON object that matches the ErrorAnalysis schema. 
@@ -156,4 +200,4 @@ class CodeFixer:
             backup_path.write_text(file_path.read_text())
             display_message(self.console, f"\n[dim] 💾 Backup created at {backup_path}[/dim]\n")
         except Exception as e:
-            display_message(self.console, f"[red] ❌ Failed to create backup for {file_path}: {e}[/red]\n")
+            display_message(self.console, f"\n[red] ❌ Failed to create backup for {file_path}: {e}[/red]\n")

@@ -48,3 +48,13 @@ def display_welcome(console: Console):
     
 def display_message(console: Console, message: str):
     console.print(f"{message}")
+    
+def display_diagnosis(console: Console, message: str):
+    diagnosis_text = Text(message, style="bright_white")
+    panel = Panel(
+        diagnosis_text,
+        title="[bold cyan]🤖 AI Diagnosis[/bold cyan]",
+        border_style="cyan",
+        padding=(1, 2),
+    )
+    console.print(panel)

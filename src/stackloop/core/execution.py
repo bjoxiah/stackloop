@@ -45,7 +45,7 @@ def run_application(work_dir: Path, script: str, console: Console) -> ExecutionR
             if exec_result.stdout:
                 console.print(Panel(
                     exec_result.stdout,
-                    title="[green]Standard Output[/green]",
+                    title="[green] 🎉 Success Output [/green]",
                     border_style="green",
                     padding=(1, 2)
                 ))
@@ -55,7 +55,7 @@ def run_application(work_dir: Path, script: str, console: Console) -> ExecutionR
             if exec_result.stderr:
                 console.print(Panel(
                     exec_result.stderr,
-                    title="[red]Error Output[/red]",
+                    title="[bold red]🐛 Error Output[/bold red]",
                     border_style="red",
                     padding=(1, 2)
                 ))

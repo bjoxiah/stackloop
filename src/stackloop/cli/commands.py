@@ -10,7 +10,7 @@ from stackloop.utils.constants import MAX_ITERATIONS
 from stackloop.core.execution import install_dependencies, run_application
 from stackloop.core.debug_session import DebugSession
 from stackloop.core.code_fixer import CodeFixer
-from stackloop.cli.display import display_message, display_welcome, get_package_version
+from stackloop.cli.display import display_diagnosis, display_message, display_welcome, get_package_version
 from stackloop.cli.prompts import (
     confirm_sync_back, get_runtime_choice, get_script_command, resolve_directory
 )
@@ -105,7 +105,8 @@ def run(directory: Optional[Path] = typer.Argument(None, help="Project root dire
                 display_message(console, f"\n[yellow]💡 Application failed, AI will attempt to fix errors...[/yellow]\n")
                 
                 # Analyze and fix errors
-                analysis = fixer.analyze_error(result.stderr)
+                analysis = fixer.analyze_error(result.stderr)                
+                display_diagnosis(console, analysis.message)
                 changed = fixer.apply_fixes(analysis, session.relative_path)
                 if changed:
                     changes_made = True
@@ -113,7 +114,7 @@ def run(directory: Optional[Path] = typer.Argument(None, help="Project root dire
         # Final summary
         if success:
             if changes_made:
-                display_message(console, f"\n[bold yellow]🔄 Files were fixed in the working directory.[/bold yellow]\n")
+                display_message(console, f"\n[bold yellow] 🔄 Files were fixed in the working directory.[/bold yellow]\n")
                 if confirm_sync_back():
                     session.create_backup_for_root(console, config)
                     session.sync_back_to_root(console, config)
@@ -122,7 +123,7 @@ def run(directory: Optional[Path] = typer.Argument(None, help="Project root dire
                     display_message(console, f"\n[dim]💡 Fixed files are in: {session.work_dir}[/dim]\n")
             else:
                 display_message(console, f"\n[green]✅ No changes were needed. Everything is already working![/green]\n")
-        else:
+        else: 
             display_message(console, f"\n[red]❌ Maximum iterations reached, application still fails.[/red]\n")
     
     except KeyboardInterrupt:
