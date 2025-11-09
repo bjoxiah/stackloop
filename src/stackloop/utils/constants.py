@@ -8,11 +8,10 @@ MAX_ITERATIONS = 5
 
 SUPPORTED_MODELS = {
     "groq": [
-        "grok-4-fast-reasoning",    # High-performance, low-latency inference model
-        "grok-code-fast-1",         # Cost-effective and fast for simple coding tasks
-        "gpt-oss-120b",             # OpenAI's open-weight model offered on Groq for enterprise use
-        "llama-3.1-70b",            # Updated Llama model (assuming 3.1 is the latest for groq in Nov 2025)
-        "mixtral-8x7b",
+        "llama-3.3-70b-versatile",    
+        "llama-3.1-8b-instant",        
+        "openai/gpt-oss-120b",          
+        "openai/gpt-oss-20b" 
     ],
     "google": [
         "gemini-2.5-pro",           # Google's most powerful coding model, excels at reasoning in long contexts

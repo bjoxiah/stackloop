@@ -1,4 +1,5 @@
 from pathlib import Path
+from pydantic_ai import Agent
 from rich.console import Console
 
 from stackloop.cli.display import display_message
@@ -8,7 +9,7 @@ from stackloop.models.session_config import SessionConfig
 
 
 class CodeFixer:
-    def __init__(self, ai_agent, console: Console, session: SessionConfig):
+    def __init__(self, ai_agent: Agent, console: Console, session: SessionConfig):
         self.ai_agent = ai_agent
         self.console = console
         self.session = session
