@@ -39,8 +39,6 @@ Create a `.env` file in your project directory with at least one API key:
 OPENAI_API_KEY=your_key_here
 ANTHROPIC_API_KEY=your_key_here
 GROQ_API_KEY=your_key_here
-GOOGLE_API_KEY=your_key_here
-MISTRAL_API_KEY=your_key_here
 ```
 
 ## License

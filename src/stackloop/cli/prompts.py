@@ -7,7 +7,7 @@ def get_runtime_choice() -> str:
     try: 
         answer = questionary.select(
             "Select your project runtime:",
-            choices=["Python", "Node.js", "Go", "Other"],
+            choices=DEFAULT_COMMANDS.keys(),
             style=get_questionary_style()
         ).ask()
         

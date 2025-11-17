@@ -38,13 +38,13 @@ def get_api_key(provider: str, console: Console) -> str:
 
     if not key_env:
         display_message(console, f"\n[red]❌ Unsupported provider: {provider}[/red]\n")
-        raise typer.Exit(1)
+        raise typer.Exit()
 
     key = os.getenv(key_env)
     if not key:
         display_message(console, f"\n[bold red]❌ Missing API key for {provider}![/bold red]\n")
         display_message(console, f"\n[dim]Please set [cyan]{key_env}[/cyan] in your .env file.[dim]\n")
-        raise typer.Exit(1)
+        raise typer.Exit()
     return key
 
 def select_model(provider: str, console: Console) -> str:
@@ -52,7 +52,7 @@ def select_model(provider: str, console: Console) -> str:
         models = SUPPORTED_MODELS.get(provider)
         if not models:
             display_message(console, f"\n[red] No models found for provider {provider}[/red]\n")
-            raise typer.Exit(1)
+            raise typer.Exit()
 
         if len(models) == 1:
             return models[0]
