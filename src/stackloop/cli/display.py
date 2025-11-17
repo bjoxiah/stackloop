@@ -25,8 +25,7 @@ def display_welcome(console: Console):
     
     # Description Panel
     desc_text = Text(
-        "⚙️  AI-powered debugging agent that runs, analyzes, and fixes your code.\n\n"
-        "💡 Created with ❤️ for developers who hate debugging loops.\n",
+        "⚙️  AI-powered debugging agent that runs, analyzes, and fixes your code.\n",
         style="bright_cyan",
         justify="left"
     )
@@ -49,12 +48,28 @@ def display_welcome(console: Console):
 def display_message(console: Console, message: str):
     console.print(f"{message}")
     
-def display_diagnosis(console: Console, message: str):
-    diagnosis_text = Text(message, style="bright_white")
-    panel = Panel(
+def display_diagnosis(console: Console, message: str, style: str = 'bright_white'):
+    diagnosis_text = Text(message, style)
+    panel = Panel.fit(
         diagnosis_text,
         title="[bold cyan]🤖 AI Diagnosis[/bold cyan]",
         border_style="cyan",
-        padding=(1, 2),
+        padding=(1, 4),
+        box=box.ROUNDED,
     )
+    console.print("\n")
     console.print(panel)
+    console.print("\n")
+    
+def display_success(console: Console, message: str, style: str = 'bright_white'):
+    success_text = Text(message, style)
+    panel = Panel.fit(
+        success_text,
+        title="[bold green]🎉 Success [/bold green]",
+        border_style="cyan",
+        padding=(1, 4),
+        box=box.ROUNDED
+    )
+    console.print("\n")
+    console.print(panel)
+    console.print("\n")

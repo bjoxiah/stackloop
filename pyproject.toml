@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "stackloop"
-version = "1.0.3"
+version = "2.0.0"
 description = "AI-powered debugging agent that automatically runs, analyzes, and fixes your code"
 authors = ["Blessed Josiah <blessed_josiah@yahoo.com>"]
 readme = "README.md"

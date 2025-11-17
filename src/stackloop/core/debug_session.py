@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from pathlib import Path
 from datetime import datetime
 import shutil
@@ -93,19 +92,28 @@ class DebugSession:
         synced_files = []
 
         for item in session.modified_files:
-            source = (config.working_directory / item).resolve()
-            dest = (config.root_directory / item).resolve()
+            relative_path = Path(item).relative_to(config.working_directory)
+                        
+            source = Path(item).resolve()
+            dest = (config.root_directory / relative_path).resolve()
 
             try:
                 dest.parent.mkdir(parents=True, exist_ok=True)  # ✅ ensure directories exist
                 shutil.copy2(source, dest)
-                synced_files.append(item)
+                synced_files.append(relative_path)
             except Exception as e:
-                display_message(console, f"\n[yellow] ⚠️ Could not sync {item}: {e}[/yellow]\n")
+                display_message(console, f"\n[yellow]⚠️ Could not sync {item}: {e}[/yellow]\n")
 
         if synced_files:
             display_message(console, f"\n[green]✅ Synced {len(synced_files)} files back to root[/green]\n")
-            display_message(console, f"\n[dim]Files: {', '.join(synced_files[:5])}{'...' if len(synced_files) > 5 else ''}[/dim]\n")
+            display_message(
+                console,
+                f"\n[green]📝 Files Synced:\n\n"
+                f"{chr(10).join(str(f) for f in synced_files[:5])}"
+                f"{'...' if len(synced_files) > 5 else ''}"
+                f"[/green]\n"
+            )
+
 
         return synced_files
 
@@ -119,7 +127,8 @@ class DebugSession:
             session = config
 
         for item in session.modified_files:
-            file_path = (config.root_directory / item).resolve()
+            relative_path = Path(item).relative_to(config.working_directory)
+            file_path = (config.root_directory / relative_path).resolve()
             backup_path = file_path.with_suffix(file_path.suffix + ".bak")
 
             try:
